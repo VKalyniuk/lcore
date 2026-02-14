@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/examples/">
+    <Project Path="examples/Example.Cqrs/Example.Cqrs.csproj" Id="df0bf0ae-ab12-40f3-8af5-33673c0cfcad" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="LICENSE" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/LCore.Cqrs/LCore.Cqrs.csproj" />
+  </Folder>
+</Solution>

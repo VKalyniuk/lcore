@@ -2,6 +2,10 @@
 
 namespace Lumini.Core.Cqrs.Queries;
 
-public interface IQuery<out TResult> : IRequest<TResult>
+public interface IBaseQuery
+{
+}
+
+public interface IQuery<out TResult> : IBaseQuery, IRequest<TResult>
 {
 }

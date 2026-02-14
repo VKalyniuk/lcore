@@ -2,7 +2,11 @@
 
 namespace Lumini.Core.Cqrs.Commands;
 
-public interface ICommand : IRequest
+public  interface IBaseCommand
+{
+}
+
+public interface ICommand : IBaseCommand, IRequest
 {
 }
 

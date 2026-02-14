@@ -1,7 +1,6 @@
 ﻿using Example.Cqrs.Commands;
 using Example.Cqrs.Queries;
 using Lumini.Core.Cqrs.Senders;
-using System.Net.Sockets;
 
 namespace Example.Cqrs;
 

@@ -1,4 +1,6 @@
-﻿using Lumini.Core.Cqrs.Requests;
+﻿using Lumini.Core.Cqrs.Decorators;
+using Lumini.Core.Cqrs.Requests;
+using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using System.Runtime.ExceptionServices;
 
@@ -19,7 +21,7 @@ internal class Sender(IServiceProvider serviceProvider) : ISender
 
         MethodInfo handleMethod = GetHandleMethod(handler, requestType);
 
-        object result = InvokeAndUnwrap(handler, handleMethod, request, cancellationToken);
+        object result = await InvokeAndUnwrap<Task, IRequest>(handler, handleMethod, request, cancellationToken);
 
         await CastAndValidateTask<Task>(result, handleMethod).ConfigureAwait(false);
     }
@@ -35,7 +37,7 @@ internal class Sender(IServiceProvider serviceProvider) : ISender
 
         MethodInfo handleMethod = GetHandleMethod(handler, requestType);
 
-        object result = InvokeAndUnwrap(handler, handleMethod, request, cancellationToken);
+        object result = await InvokeAndUnwrap<Task<TResponse>, IRequest<TResponse>>(handler, handleMethod, request, cancellationToken);
 
         return await CastAndValidateTask<Task<TResponse>>(result, handleMethod).ConfigureAwait(false);
     }
@@ -81,26 +83,46 @@ internal class Sender(IServiceProvider serviceProvider) : ISender
         return method;
     }
 
-    private static object InvokeAndUnwrap(object handler, MethodInfo method, object request, CancellationToken cancellationToken)
+    private async Task<object> InvokeAndUnwrap<TResult, TRequest>(object handler, MethodInfo method, object request, CancellationToken cancellationToken)
+        where TRequest : notnull
     {
-        object? result;
         try
         {
-            result = method.Invoke(handler, new object[] { request, cancellationToken });
+            RequestHandlerDelegate<TResult> next = (ct) =>
+            {
+                var result = method.Invoke(handler, new object[] { request, ct })!;
+                return Task.FromResult((TResult)result);
+            };
+
+            // Wrap 'next' by decorators in reverse order
+            var requestType = request.GetType();
+            var responseType = typeof(TResult);
+            var decoratorType = typeof(IHandlerDecorator<,>).MakeGenericType(requestType, responseType);
+            var decorators = serviceProvider.GetServices(decoratorType).Reverse().ToArray();
+
+            foreach (var decorator in decorators)
+            {
+                var currentNext = next;
+                next = (ct) => (Task<TResult>)decoratorType
+                    .GetMethod(nameof(IHandlerDecorator<TRequest, TResult>.Decorate))!
+                    .Invoke(decorator, new object?[] { request, currentNext, ct })!;
+            }
+
+            // Await the delegate result, validate non-null and return as object
+            var final = await next(cancellationToken).ConfigureAwait(false);
+            if (final is null)
+            {
+                throw new InvalidOperationException(
+                    $"Invocation of '{method.DeclaringType?.FullName}.{method.Name}' returned null.");
+            }
+
+            return (object)final;
         }
         catch (TargetInvocationException ex) when (ex.InnerException is not null)
         {
             ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
             throw;
         }
-
-        if (result is null)
-        {
-            throw new InvalidOperationException(
-                $"Invocation of '{method.DeclaringType?.FullName}.{method.Name}' returned null.");
-        }
-
-        return result;
     }
 
     private static TTask CastAndValidateTask<TTask>(object result, MethodInfo method) where TTask : Task

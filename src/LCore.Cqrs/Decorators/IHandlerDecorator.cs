@@ -4,5 +4,5 @@ public delegate Task<TResponse> RequestHandlerDelegate<TResponse>(CancellationTo
 
 public interface IHandlerDecorator<TRequest, TResponse> where TRequest : notnull
 {
-    Task Decorate(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken = default)
+    Task Decorate(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken = default);
 }

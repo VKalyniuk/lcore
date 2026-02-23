@@ -20,14 +20,14 @@ public static class ConfigureCqrs
         switch (mode)
         {
             case ConfigurationMode.Manual:
-                services = ConfigureManual(services);
-                break;
+            services = ConfigureManual(services);
+            break;
             case ConfigurationMode.ConfigureByConfigurator:
-                services = ConfigureByConfigurator(services);
-                break;
+            services = ConfigureByConfigurator(services);
+            break;
             case ConfigurationMode.AssemblyScanningWithDecorators:
-                services = ConfigureAsseblyAndDecorators(services);
-                break;
+            services = ConfigureAsseblyAndDecorators(services);
+            break;
         }
 
         return services;

@@ -12,7 +12,7 @@ internal class ValidationDecorator<TRequest, TResult> : IHandlerDecorator<TReque
         {
             return next();
         }
-        
+
         throw new InvalidOperationException("Request validation failed.");
     }
 

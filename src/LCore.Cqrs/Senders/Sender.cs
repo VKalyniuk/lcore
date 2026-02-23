@@ -9,6 +9,7 @@ namespace Lumini.Core.Cqrs.Senders;
 
 internal class Sender(IServiceProvider serviceProvider) : ISender
 {
+    // TODO: Consider caching handler and decorator types for performance optimization, especially in high-throughput scenarios.
     private const string HandleMethodName = "Handle";
 
     public async Task Send(IRequest request, CancellationToken cancellationToken = default)
